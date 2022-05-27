@@ -17,12 +17,19 @@ message DataQueue {
 	google.protobuf.ListValue shape = 4;
 }
 
-message Component {
+message Edge{
+	string src_name = 1;
+	DataQueue src_queue = 2;
+	string dst_name = 3;
+	DataQueue dst_queue = 4;
+}
+
+message Vertex {
 	string name = 1;
 	uint32 logical_id = 2;
 	uint32 parallelism = 3;
 	uint32 branches = 4;
-	google.protobuf.ListValue child_logical_ids = 5;
+	repeated Edge edges = 5;
 	bool is_accelerated = 6;
 	string accel_impl = 7;
 	string target_impl = 8;
@@ -36,5 +43,5 @@ message Component {
 // and cpp_impl_fn will be dynamically linked 
 
 message dataflow {
-	repeated Component components = 1;	
+	repeated Vertex vertices = 1;	
 }
