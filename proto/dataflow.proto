@@ -1,0 +1,40 @@
+syntax = "proto3";
+import "google/protobuf/struct.proto";
+
+package toroflow;
+
+enum QueueType {
+    input = 0;
+    output = 1;
+    state = 2;
+	special = 3;
+}
+
+message DataQueue {
+	string name = 1; 
+	QueueType queue_type = 2;
+	string data_type = 3;
+	google.protobuf.ListValue shape = 4;
+}
+
+message Component {
+	string name = 1;
+	uint32 logical_id = 2;
+	uint32 parallelism = 3;
+	uint32 branches = 4;
+	google.protobuf.ListValue child_logical_ids = 5;
+	bool is_accelerated = 6;
+	string accel_impl = 7;
+	string target_impl = 8;
+	string cpp_impl_file = 9;
+	string cpp_impl_fn = 10;
+	string py_impl_file = 11;
+	string py_impl_fn = 12;
+}
+
+// cpp_impl_file, .so (shared object) file 
+// and cpp_impl_fn will be dynamically linked 
+
+message dataflow {
+	repeated Component components = 1;	
+}
