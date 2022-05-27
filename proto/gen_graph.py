@@ -1,12 +1,12 @@
+from collections import deque
 import dataflow_pb2
 from google.protobuf.struct_pb2 import ListValue
-from .graph import Graph
-from .component import Component
-from .sample_component import Source, Sink
-
+from graph import Graph
+from component import ComponentStatus
+from sample_component import Source, Sink
 
 # graph = dataflow_pb2.dataflow()
-# comp = graph.components.add()
+# comp = graph.vertices.add()
 # comp.name = 'source'
 # comp.logical_id = 1
 # comp.parallelism = 1
@@ -18,27 +18,74 @@ from .sample_component import Source, Sink
 
 # comp.child_logical_ids.extend(lv)
 
-bench = Graph("cpp_python_comparison")
+# user code here
+graph = Graph("cpp_python_comparison")
 src = Source()
 tensor_queue = "tensors"
 src.set_output(tensor_queue, (720,720,3), is_process_parallel=True)
-
 sink =Sink()
 sink.set_input(tensor_queue, (720,720,3), is_process_parallel=True)
 
-bench.add_component(src)
-bench.add_component(sink)
+graph.add_component(src)
+graph.add_component(sink)
+graph.add_flow(tensor_queue, src, tensor_queue, sink)
 
-bench.add_flow(tensor_queue, src, tensor_queue, sink)
 
-
-graph = dataflow_pb2.dataflow()
-
+protobuf_graph = dataflow_pb2.dataflow()
 
 # Run BFS on the graph to generate the protobuf
-# comp = graph.components.add()
-# comp.name = c.name
-# comp.logical_id = c.cid
-# comp.parallelism = 1 # as default
-# comp.branches = 1
+ready_queue = deque()
+for c in graph.components:
+    c._component_status = ComponentStatus.initialized
+
+graph.components[0]._component_status = ComponentStatus.visited
+ready_queue.append(graph.components[0])
+while len(ready_queue) > 0 :
+    comp = ready_queue.popleft()
+
+    protobuf_comp = protobuf_graph.vertices.add()
+    protobuf_comp.name = comp.name
+    protobuf_comp.logical_id = comp.cid
+    protobuf_comp.parallelism = 1    
+
+    for queue_name in comp.write_queues:
+        dst_q_list = graph.edges.get((queue_name, comp.name))
+        protobuf_comp.branches =  len(dst_q_list)
+
+        for dst_queue_name , dst_comp_name in dst_q_list:
+            edge = dataflow_pb2.Edge()  
+            edge.src_name  = comp.name
+            src_queue = dataflow_pb2.DataQueue()
+            src_queue.name = queue_name
+            ## TODO: find it in either output or state queues
+            ## this will help us define the queue type
+            shape, _ = comp.output_queues[queue_name]
+            src_queue.shape.extend(list(shape))
+            print(src_queue)            
+            src_queue.data_type = "float"
+            '''
+            Traceback (most recent call last):
+            File "gen_graph.py", line 67, in <module>
+                edge.src_queue = src_queue
+            AttributeError: Assignment not allowed to field "src_queue" in protocol message object.
+            '''
+            #edge.src_queue = src_queue
+
+            edge.dst_name = dst_comp_name
+            dst_queue = dataflow_pb2.DataQueue()
+            dst_queue.name = dst_queue_name
+            print(dst_queue)
+            # #TODO: queue type
+            # #TODO: data_type
+            # #TODO: shape
+            # edge.dst_queue = dst_queue
+
+            dst_comp = graph.get_component_byname(dst_comp_name)
+            if dst_comp.component_status == ComponentStatus.initialized and \
+                dst_comp not in ready_queue:
+                dst_comp.component_status = ComponentStatus.visited
+                ready_queue.append(dst_comp)
+
+
+
     

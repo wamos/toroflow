@@ -14,6 +14,7 @@ message DataQueue {
 	string name = 1; 
 	QueueType queue_type = 2;
 	string data_type = 3;
+	// use repeated values here
 	google.protobuf.ListValue shape = 4;
 }
 

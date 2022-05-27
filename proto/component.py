@@ -1,16 +1,12 @@
 from collections import defaultdict
-from .flow import Flow, FlowQueue
 from typing import Any, List, Dict, Tuple
 import inspect
 from enum import Enum
 from multiprocessing import shared_memory as shm
         
 class ComponentStatus(Enum):
-    created=1    
-    initialized=2
-    running=3
-    paused=4
-    completed=5
+    initialized=1
+    visited=2        
 
 class Component(object):
     ID_COUNTER = 0
@@ -46,7 +42,7 @@ class Component(object):
         self._state_queues = states or {}
         self._output_queues = outputs or {}
         # assert all(isinstance(i, FlowQueue) for i in self.input_queues)
-        assert all(isinstance(v, FlowQueue) for _, v in self._output_queues.items())
+        # assert all(isinstance(v, FlowQueue) for _, v in self._output_queues.items())
         # assert all(isinstance(s, FlowQueue) for s in self.state_queues)
 
         self._parameters = kwargs
@@ -97,7 +93,7 @@ class Component(object):
         self._header = header
         self._device = device
         self._process_handle = None
-        self._component_status = ComponentStatus.created
+        self._component_status = ComponentStatus.initialized
         self._iterations = -1
         self._is_observed = True
         self._ingress_timestamps = None
@@ -230,47 +226,17 @@ class Component(object):
     def device(self) -> str:
         return self._device
 
-    ## TODO: merge this into set_intput, set_output, and set_state with 
-    # if self._deivce != "cpu": # when the component wants to run on something no CPU
-    #     q = FlowQueue(name, shape, queue_type, interprocess=True)
-
-    def set_interprocess_queues(self, name, shape, queue_type):
-        assert name in self.input_names or name in self.state_names \
-            or name in self.output_names
-        q = FlowQueue(name, shape, queue_type, interprocess=True)
-        # print(f"set_interprocess_queues, queue {q}")
-        if queue_type == "input":
-            self._input_queues[name] = q
-        elif queue_type == "state":
-            self._state_queues[name] = q
-        elif queue_type == "output":
-            self._output_queues[name] = q
-        else:
-            raise RuntimeError(f"Invalid type {queue_type} for queues of the component {self._name}")
-
     def set_input(self, name, shape, is_process_parallel=True, is_observed=False,is_interprocess=False):
         assert name in self.input_names and name not in self.input_queues
-        if is_process_parallel == False:
-            q = FlowQueue(name, shape, queue_type="input", interprocess=is_interprocess)
-            self._input_queues[name] = q
-        else:
-            self._input_queues[name] = shape, is_observed
+        self._input_queues[name] = shape, is_observed
 
     def set_state(self, name, shape, is_process_parallel=True, is_observed=False, is_interprocess=False):
         assert name in self.state_names and name not in self.state_queues
-        if is_process_parallel == False:
-            q = FlowQueue(name, shape, queue_type="state", interprocess=is_interprocess)
-            self._state_queues[name] = q
-        else:
-            self._state_queues[name] = shape, is_observed
+        self._state_queues[name] = shape, is_observed
 
     def set_output(self, name, shape, is_process_parallel=True, is_observed=False, is_interprocess=False):
         assert name in self.output_names and name not in self.output_queues
-        if is_process_parallel == False:
-            q = FlowQueue(name, shape, queue_type="output", interprocess=is_interprocess)
-            self._output_queues[name] = q
-        else:
-            self._output_queues[name] = shape, is_observed
+        self._output_queues[name] = shape, is_observed
 
     def set_header(self, header):
         assert self.header is None
@@ -382,9 +348,9 @@ class ComponentInstance(object):
     def outputs(self):
         return self._outputs
 
-    @property
-    def flowlist(self) -> List[Flow]:
-        return self._flowlist
+    # @property
+    # def flowlist(self) -> List[Flow]:
+    #     return self._flowlist
 
-    def add_flow(self, flow):
-        self._flowlist.append(flow)
+    # def add_flow(self, flow):
+    #     self._flowlist.append(flow)

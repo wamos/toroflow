@@ -1,4 +1,4 @@
-from .component import Component, ComponentInstance
+from component import Component, ComponentInstance
 from typing import List, Dict
 import pprint, logging
 

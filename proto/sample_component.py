@@ -1,6 +1,6 @@
 from typing import List
 from numpy.random import default_rng
-from .component import Component
+from component import Component
 import numpy as np
 
 class Source(Component):
