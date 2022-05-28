@@ -5,19 +5,6 @@ from graph import Graph
 from component import ComponentStatus
 from sample_component import Source, Sink
 
-# graph = dataflow_pb2.dataflow()
-# comp = graph.vertices.add()
-# comp.name = 'source'
-# comp.logical_id = 1
-# comp.parallelism = 1
-# comp.branches = 1
-
-# lv = ListValue()
-# for i in range(5):
-# 	lv.add_list().extend(i)
-
-# comp.child_logical_ids.extend(lv)
-
 # user code here
 graph = Graph("cpp_python_comparison")
 src = Source()
@@ -54,7 +41,10 @@ while len(ready_queue) > 0 :
 
         for dst_queue_name , dst_comp_name in dst_q_list:
             edge = protobuf_comp.edges.add()  
-            edge.src_name  = comp.name            
+            edge.src_name  = comp.name
+            # https://stackoverflow.com/questions/18376190/attributeerror-assignment-not-allowed-to-composite-field-task-in-protocol-mes
+            # https://developers.google.com/protocol-buffers/docs/reference/python-generated#embedded_message            
+            # we need to assign directly to edge.src_queue.name
             edge.src_queue.name = queue_name
             shape, _ = comp.output_queues[queue_name]
             edge.src_queue.shape.extend(shape)
@@ -67,14 +57,15 @@ while len(ready_queue) > 0 :
             shape, _ = dst_comp.input_queues[queue_name]
             edge.dst_queue.shape.extend(shape)
             edge.dst_queue.data_type =  "float"
-            print(edge.src_queue.shape)
-            print(edge.dst_queue.shape)
+            # print(edge.src_queue.shape)
+            # print(edge.dst_queue.shape)
+            # print(edge)
             
             if dst_comp.component_status == ComponentStatus.initialized and \
                 dst_comp not in ready_queue:
                 dst_comp.component_status = ComponentStatus.visited
                 ready_queue.append(dst_comp)
-
+    print(protobuf_comp)
 
 
     
