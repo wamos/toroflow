@@ -53,34 +53,22 @@ while len(ready_queue) > 0 :
         protobuf_comp.branches =  len(dst_q_list)
 
         for dst_queue_name , dst_comp_name in dst_q_list:
-            edge = dataflow_pb2.Edge()  
-            edge.src_name  = comp.name
-            src_queue = dataflow_pb2.DataQueue()
-            src_queue.name = queue_name
+            edge = protobuf_comp.edges.add()  
+            edge.src_name  = comp.name            
+            edge.src_queue.name = queue_name
+            shape, _ = comp.output_queues[queue_name]
+            edge.src_queue.shape.extend(list(shape))
+            edge.src_queue.data_type = "float"
             ## TODO: find it in either output or state queues
             ## this will help us define the queue type
-            shape, _ = comp.output_queues[queue_name]
-            src_queue.shape.extend(list(shape))
-            print(src_queue)            
-            src_queue.data_type = "float"
-            '''
-            Traceback (most recent call last):
-            File "gen_graph.py", line 67, in <module>
-                edge.src_queue = src_queue
-            AttributeError: Assignment not allowed to field "src_queue" in protocol message object.
-            '''
-            #edge.src_queue = src_queue
-
-            edge.dst_name = dst_comp_name
-            dst_queue = dataflow_pb2.DataQueue()
-            dst_queue.name = dst_queue_name
-            print(dst_queue)
-            # #TODO: queue type
-            # #TODO: data_type
-            # #TODO: shape
-            # edge.dst_queue = dst_queue
-
             dst_comp = graph.get_component_byname(dst_comp_name)
+            edge.dst_name = dst_comp_name
+            edge.dst_queue.name =  dst_queue_name
+            shape, _ = dst_comp.input_queues[queue_name]
+            edge.dst_queue.shape.extend(list(shape))
+            edge.dst_queue.data_type =  "float"
+            print(edge)
+            
             if dst_comp.component_status == ComponentStatus.initialized and \
                 dst_comp not in ready_queue:
                 dst_comp.component_status = ComponentStatus.visited
