@@ -57,7 +57,7 @@ while len(ready_queue) > 0 :
             edge.src_name  = comp.name            
             edge.src_queue.name = queue_name
             shape, _ = comp.output_queues[queue_name]
-            edge.src_queue.shape.extend(list(shape))
+            edge.src_queue.shape.extend(shape)
             edge.src_queue.data_type = "float"
             ## TODO: find it in either output or state queues
             ## this will help us define the queue type
@@ -65,9 +65,10 @@ while len(ready_queue) > 0 :
             edge.dst_name = dst_comp_name
             edge.dst_queue.name =  dst_queue_name
             shape, _ = dst_comp.input_queues[queue_name]
-            edge.dst_queue.shape.extend(list(shape))
+            edge.dst_queue.shape.extend(shape)
             edge.dst_queue.data_type =  "float"
-            print(edge)
+            print(edge.src_queue.shape)
+            print(edge.dst_queue.shape)
             
             if dst_comp.component_status == ComponentStatus.initialized and \
                 dst_comp not in ready_queue:
