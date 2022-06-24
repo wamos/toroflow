@@ -10,7 +10,7 @@ graph = Graph("cpp_python_comparison")
 src = Source()
 tensor_queue = "tensors"
 src.set_output(tensor_queue, (720,720,3), is_process_parallel=True)
-sink =Sink()
+sink = Sink()
 sink.set_input(tensor_queue, (720,720,3), is_process_parallel=True)
 
 graph.add_component(src)
@@ -66,6 +66,8 @@ while len(ready_queue) > 0 :
                 dst_comp.component_status = ComponentStatus.visited
                 ready_queue.append(dst_comp)
     print(protobuf_comp)
-
+    f = open("test_graph.protobuf", "wb")
+    f.write(protobuf_comp.SerializeToString())
+    f.close()
 
     
